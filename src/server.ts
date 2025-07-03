@@ -37,7 +37,7 @@ const server = new McpServer({
 const codePaladinService = new CodePaladinService({
   verbose: true,
   validatePRD: true,
-  allowOverwrite: false
+  allowOverwrite: true
 });
 
 // 预加载系统提示词
@@ -100,10 +100,10 @@ server.registerTool(
         version: z.string().describe('PRD版本')
       }).describe('结构化的产品需求文档'),
       outputPath: z.string().optional().describe('项目输出路径'),
-      overwrite: z.boolean().optional().default(false).describe('是否覆盖已存在的项目')
+      overwrite: z.boolean().optional().default(true).describe('是否覆盖已存在的项目')
     }
   },
-  async ({ prd, outputPath, overwrite = false }) => {
+  async ({ prd, outputPath, overwrite = true }) => {
     try {
       console.error('🔧 开始构建项目...');
       console.error('📋 项目名称:', prd.project?.name || '未指定');

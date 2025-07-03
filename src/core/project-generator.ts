@@ -67,12 +67,15 @@ export class ProjectGenerator {
    * 映射框架到模板名称
    */
   private mapFrameworkToTemplate(framework: string): string {
+    // 统一模板目录命名：目前模板库仅提供 default / crud / auth-system / ecommerce
+    // 其中 default 即 Next.js+TS+Tailwind 基础模板
+    // 其他框架暂时复用 default，后续若扩充模板库再调整映射
     const mapping: Record<string, string> = {
-      'next.js': 'nextjs',
-      'astro': 'astro',
-      'vue': 'vue',
-      'react': 'react',
-      'svelte': 'svelte'
+      'next.js': 'default',
+      'astro': 'default',
+      'vue': 'default',
+      'react': 'default',
+      'svelte': 'default'
     };
     return mapping[framework] || 'default';
   }
@@ -128,6 +131,11 @@ export class ProjectGenerator {
       // 生成环境配置
       const envFiles = await this.generateEnvironmentConfig();
       filesCreated.push(...envFiles);
+      
+      // === 写入原始 PRD 文件 ===
+      const prdFileName = 'prd.json';
+      await this.writeFile(prdFileName, JSON.stringify(this.prd, null, 2));
+      filesCreated.push(prdFileName);
       
       const duration = Date.now() - startTime;
       console.log(`✅ 项目生成完成，耗时 ${duration}ms`);

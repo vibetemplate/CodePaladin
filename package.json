@@ -1,11 +1,11 @@
 {
-  "name": "codepaladin-mcp",
-  "version": "1.0.7",
-  "description": "VibeGen 代码侠 (CodePaladin) - MCP-2 确定性代码生成服务",
+  "name": "vibe-codepaladin",
+  "version": "1.0.8",
+  "description": "VibeGen 代码侠 (CodePaladin) - Vibe 确定性代码生成服务",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "codepaladin-mcp": "dist/index.js"
+    "vibe-codepaladin": "dist/index.js"
   },
   "scripts": {
     "build": "npm run clean && tsc && npm run copy-assets",
