@@ -1,8 +1,12 @@
-# VibeGen CodePaladin 🤖⚔️
+# CodePaladin (代码侠)
 
-> 代码侠 - VibeGen 系统的确定性代码生成引擎
+> **VibeGen 双核架构 - MCP-2 代码英雄**
+>
+> `CodePaladin` 是 VibeGen 系统中的"代码侠"，作为可靠的代码执行引擎，它严格遵循由[需求精灵 (SpecSprite)](../SpecSprite/README.md)生成的项目蓝图 (`prd.json`)，自动化地装配出高质量、可维护的Web应用。
+>
+> **重要提示**: 此服务是 VibeGen 双核架构的第二环，专注于代码生成，不参与需求对话。它需要与 `SpecSprite` 协同工作。
 
-**CodePaladin** 是 VibeGen 双核架构中的 MCP-2 服务，专注于将结构化的 PRD (产品需求文档) 精确地转换为高质量的项目代码。
+`CodePaladin` 是一款基于模板和模块的智能代码生成器。它接收一个结构化的 `prd.json` 文件，并根据其中的定义，精确地构建出完整的项目代码。
 
 ## 特性
 
@@ -15,6 +19,8 @@
 - 📋 **系统提示词** - 遵循清单驱动构建的行为准则
 
 ## 架构
+
+[![双核AI架构](https://github.com/vibetemplate/CodePaladin/raw/main/images/tech.png)](https://github.com/vibetemplate/CodePaladin)
 
 CodePaladin 作为 MCP (Model Context Protocol) 服务运行，与 Cursor IDE 深度集成：
 
@@ -74,20 +80,33 @@ npm run build
 npm start
 ```
 
-### 4. 在 Cursor IDE 中使用
+## 在 Cursor 中配置
 
-将 CodePaladin 配置为 MCP 服务：
+要将 CodePaladin 集成到 Cursor IDE，请按以下步骤操作：
 
-```json
-{
-  "mcpServers": {
-    "codepaladin": {
-      "command": "node",
-      "args": ["/path/to/CodePaladin/dist/index.js"]
+1.  **构建项目**:
+    确保已运行 `npm install` 和 `npm run build`。
+
+2.  **获取项目绝对路径**:
+    在 CodePaladin 项目根目录运行 `pwd` 并复制路径，例如：
+    `/Users/yourname/dev/vibetemplate/CodePaladin`
+
+3.  **修改 Cursor 设置**:
+    打开 Cursor 的 `~/.cursor/settings.json` 文件，添加以下配置。将路径替换为您的真实路径。
+
+    ```json
+    {
+      "mcpServers": {
+        "codepaladin": {
+          "command": "node",
+          "args": ["/path/to/CodePaladin/dist/index.js"]
+        }
+      }
     }
-  }
-}
-```
+    ```
+    **注意**: `args` 必须是 `dist/index.js` 的**绝对路径**。
+
+配置后，即可在 Cursor 中通过 `@codepaladin` 调用其工具。
 
 ## MCP 工具列表
 
