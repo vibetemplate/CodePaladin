@@ -99,7 +99,8 @@ npm start
       "command": "npx",
       "args": ["-y", "codepaladin-mcp@latest"],
       "env": {
-        "CODEPALADIN_CONFIG_PATH": "~/.codepaladin/config.json"
+        "CODEPALADIN_CONFIG_PATH": "~/.codepaladin/config.json",
+        "NODE_ENV": "production"
       }
     }
   }
@@ -119,6 +120,7 @@ npm start
       "command": "npx",
       "args": ["codepaladin-mcp@latest"],
       "env": {
+        "CODEPALADIN_CONFIG_PATH": "~/.codepaladin/config.json",
         "NODE_ENV": "production"
       }
     }

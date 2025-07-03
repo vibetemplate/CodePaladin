@@ -1,6 +1,6 @@
 {
   "name": "codepaladin-mcp",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "VibeGen 代码侠 (CodePaladin) - MCP-2 确定性代码生成服务",
   "main": "dist/index.js",
   "type": "module",
