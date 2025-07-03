@@ -1,6 +1,6 @@
 {
   "name": "codepaladin-mcp",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "VibeGen 代码侠 (CodePaladin) - MCP-2 确定性代码生成服务",
   "main": "dist/index.js",
   "type": "module",
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "npm run clean && tsc && npm run copy-assets",
-    "copy-assets": "mkdir -p dist/schemas dist/templates dist/prompts && cp -r src/schemas/* dist/schemas/ && cp -r src/templates/* dist/templates/ && cp -r src/prompts/* dist/prompts/",
+    "copy-assets": "mkdir -p dist/schemas dist/prompts dist/templates && cp -r src/schemas/. dist/schemas/ && cp -r src/prompts/. dist/prompts/ && cp -r src/templates/. dist/templates/",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "jest",
