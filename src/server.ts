@@ -557,19 +557,75 @@ async function main() {
     console.error(`📋 服务信息: ${SERVER_CONFIG.name} v${SERVER_CONFIG.version}`);
     console.error(`🎯 ${SERVER_CONFIG.description}`);
     
-    // 初始化 CodePaladin 服务（加载系统提示词）
-    if (!serviceInitialized) {
-      console.error('📋 初始化 CodePaladin 服务...');
-      await codePaladinService.initialize();
-      serviceInitialized = true;
-      console.error('✅ CodePaladin 服务初始化完成');
+    // ===== 环境探测日志 =====
+    console.error('🖥️  运行环境检测');
+    console.error(`• Node.js: ${process.version}`);
+    console.error(`• Platform: ${process.platform} ${process.arch}`);
+    // SDK 版本检测（如果可用）
+    try {
+      // 动态读取依赖包版本
+      const pkgJsonPath = require.resolve('@modelcontextprotocol/sdk/package.json', { paths: [process.cwd()] });
+      const pkg = (await import(pkgJsonPath, { assert: { type: 'json' } })) as any;
+      console.error(`• @modelcontextprotocol/sdk: v${pkg.default?.version || pkg.version || 'unknown'}`);
+    } catch (err) {
+      console.error('• @modelcontextprotocol/sdk: 版本未知 (无法解析 package.json)');
     }
-    
-    // 启动 MCP 服务器
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    
-    console.error('✅ CodePaladin MCP 服务器已启动，等待连接...');
+
+    // ===== 传输协议选择 =====
+    const transportPreference = process.env.CODEPALADIN_TRANSPORT ?? 'stdio';
+    const attempts: { transport: string; status: 'success' | 'error'; detail?: any }[] = [];
+    let connected = false;
+    let selectedTransportName = '';
+
+    async function tryConnect(transportName: string, createFn: () => any) {
+      if (connected) return;
+      try {
+        const transport = createFn();
+        await server.connect(transport);
+        connected = true;
+        selectedTransportName = transportName;
+        attempts.push({ transport: transportName, status: 'success' });
+      } catch (err) {
+        attempts.push({ transport: transportName, status: 'error', detail: err instanceof Error ? err.message : err });
+      }
+    }
+
+    // 1. 明确指定优先级
+    if (transportPreference === 'stdio') {
+      await tryConnect('stdio', () => new StdioServerTransport());
+    }
+
+    // 2. 自动回退（若首选失败或 preference=auto）
+    if (!connected) {
+      // Streamable HTTP
+      try {
+        const { StreamableHTTPServerTransport } = await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
+        const port = Number(process.env.CODEPALADIN_PORT) || 3000;
+        await tryConnect('streamable-http', () => new StreamableHTTPServerTransport({ port } as any));
+      } catch (_) {
+        // ignore import failure
+      }
+    }
+
+    // 3. 最后再回退 SSE (deprecated)
+    if (!connected) {
+      try {
+        const { SSEServerTransport } = await import('@modelcontextprotocol/sdk/server/sse.js');
+        await tryConnect('sse', () => new (SSEServerTransport as any)('/mcp', /*res placeholder*/ undefined));
+      } catch (_) {
+        // ignore
+      }
+    }
+
+    // 输出尝试结果
+    console.error('🛠️  传输协议尝试结果:', attempts);
+
+    if (!connected) {
+      console.error('❌ 无法初始化任何 MCP 传输协议，CodePaladin 启动失败');
+      process.exit(1);
+    }
+
+    console.error(`✅ CodePaladin MCP 服务器已启动，使用传输: ${selectedTransportName}`);
     console.error('🔧 注册的工具: build_project, validate_prd, get_supported_tech_stack, get_available_features, generate_sample_prd, get_service_info, health_check, get_system_prompts');
     
   } catch (error) {

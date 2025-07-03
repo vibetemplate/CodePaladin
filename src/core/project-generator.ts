@@ -229,32 +229,79 @@ export class ProjectGenerator {
   private async generateConfigFiles(): Promise<string[]> {
     const files: string[] = [];
     const templatePath = path.join(this.templatesPath, 'config');
+    const templateExists = await fs.pathExists(templatePath);
     
-    // TypeScript 配置
-    await this.copyFile(templatePath, 'tsconfig.json', 'tsconfig.json');
+    // ---------- TypeScript ----------
+    if (templateExists && await fs.pathExists(path.join(templatePath, 'tsconfig.json'))) {
+      await this.copyFile(templatePath, 'tsconfig.json', 'tsconfig.json');
+    } else {
+      const tsconfig = {
+        compilerOptions: {
+          target: 'ES2019',
+          module: 'ESNext',
+          moduleResolution: 'Node',
+          jsx: 'preserve',
+          esModuleInterop: true,
+          strict: false,
+          skipLibCheck: true,
+        },
+        include: ['**/*']
+      };
+      await this.writeFile('tsconfig.json', JSON.stringify(tsconfig, null, 2));
+    }
     files.push('tsconfig.json');
     
-    // 根据 UI 框架生成对应配置
+    // ---------- Tailwind & PostCSS ----------
     if (this.config.uiFramework.includes('tailwind')) {
-      const tailwindTemplate = await this.readTemplate(templatePath, 'tailwind.config.js.mustache');
-      const tailwindConfig = mustache.render(tailwindTemplate, this.config);
-      await this.writeFile('tailwind.config.js', tailwindConfig);
+      if (templateExists && await fs.pathExists(path.join(templatePath, 'tailwind.config.js.mustache'))) {
+        const tailwindTemplate = await this.readTemplate(templatePath, 'tailwind.config.js.mustache');
+        const tailwindConfig = mustache.render(tailwindTemplate, this.config);
+        await this.writeFile('tailwind.config.js', tailwindConfig);
+      } else {
+        // minimal tailwind config
+        const tailwindConfig = `module.exports = {\n  content: ['./**/*.{js,ts,jsx,tsx}'],\n  theme: { extend: {} },\n  plugins: [],\n};`;
+        await this.writeFile('tailwind.config.js', tailwindConfig);
+      }
       files.push('tailwind.config.js');
       
-      await this.copyFile(templatePath, 'postcss.config.js', 'postcss.config.js');
+      if (templateExists && await fs.pathExists(path.join(templatePath, 'postcss.config.js'))) {
+        await this.copyFile(templatePath, 'postcss.config.js', 'postcss.config.js');
+      } else {
+        const postcssConfig = `module.exports = {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {},\n  },\n};`;
+        await this.writeFile('postcss.config.js', postcssConfig);
+      }
       files.push('postcss.config.js');
     }
     
-    // ESLint 配置
-    await this.copyFile(templatePath, '.eslintrc.json', '.eslintrc.json');
+    // ---------- ESLint ----------
+    if (templateExists && await fs.pathExists(path.join(templatePath, '.eslintrc.json'))) {
+      await this.copyFile(templatePath, '.eslintrc.json', '.eslintrc.json');
+    } else {
+      const eslintConfig = {
+        env: { browser: true, es2021: true },
+        extends: ['eslint:recommended'],
+        parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+        rules: {}
+      };
+      await this.writeFile('.eslintrc.json', JSON.stringify(eslintConfig, null, 2));
+    }
     files.push('.eslintrc.json');
     
-    // Prettier 配置
-    await this.copyFile(templatePath, '.prettierrc', '.prettierrc');
+    // ---------- Prettier ----------
+    if (templateExists && await fs.pathExists(path.join(templatePath, '.prettierrc'))) {
+      await this.copyFile(templatePath, '.prettierrc', '.prettierrc');
+    } else {
+      await this.writeFile('.prettierrc', '{\n  "singleQuote": true,\n  "trailingComma": "all"\n}');
+    }
     files.push('.prettierrc');
     
-    // GitIgnore
-    await this.copyFile(templatePath, '.gitignore', '.gitignore');
+    // ---------- .gitignore ----------
+    if (templateExists && await fs.pathExists(path.join(templatePath, '.gitignore'))) {
+      await this.copyFile(templatePath, '.gitignore', '.gitignore');
+    } else {
+      const gitignore = 'node_modules\ndist\n.env\n.next\n.DS_Store\n';
+      await this.writeFile('.gitignore', gitignore);
+    }
     files.push('.gitignore');
     
     return files;
