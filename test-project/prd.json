@@ -1,0 +1,46 @@
+{
+  "project": {
+    "name": "test-project",
+    "displayName": "Test Project",
+    "description": "A project to test dynamic page generation.",
+    "version": "0.0.1"
+  },
+  "techStack": {
+    "framework": "next.js",
+    "uiFramework": "tailwind-shadcn",
+    "database": "postgresql",
+    "auth": "none",
+    "deployment": "vercel"
+  },
+  "features": {
+    "auth": false,
+    "admin": false,
+    "upload": false,
+    "email": false,
+    "payment": false,
+    "realtime": false,
+    "analytics": false,
+    "i18n": false,
+    "pwa": false,
+    "seo": false
+  },
+  "pages": [
+    {
+      "route": "/",
+      "name": "HomePage",
+      "title": "Home Page",
+      "description": "The main landing page.",
+      "components": [
+        "Hero",
+        "Features"
+      ],
+      "public": true
+    }
+  ],
+  "environment": {
+    "variables": {},
+    "secrets": []
+  },
+  "createdAt": "2025-07-03T18:19:15.196Z",
+  "version": "1.0"
+}

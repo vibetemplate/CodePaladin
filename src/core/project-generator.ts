@@ -16,29 +16,37 @@ import {
   TemplateError,
   TemplateConfig
 } from './types.js';
+import { CodePaladinLLMClient } from './llm-client.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+interface ProjectGeneratorOptions {
+  templatesPath: string;
+}
+
 export class ProjectGenerator {
   private projectName: string;
   private projectPath: string;
-  private config: ProjectConfig;
   private prd: PRDSchema;
+  private llmClient: CodePaladinLLMClient;
   private templatesPath: string;
+  private filesCreated: string[] = [];
+  private config: ProjectConfig;
   
   constructor(
     projectName: string,
     projectPath: string,
-    prd: PRDSchema
+    prd: PRDSchema,
+    llmClient: CodePaladinLLMClient,
+    options: ProjectGeneratorOptions
   ) {
     this.projectName = projectName;
     this.projectPath = projectPath;
     this.prd = prd;
+    this.llmClient = llmClient;
+    this.templatesPath = options.templatesPath;
     this.config = this.convertPRDToConfig(prd);
-    
-    // 模板路径 - 复用 vibecli 的模板
-    this.templatesPath = path.resolve(__dirname, '../templates');
   }
   
   /**
@@ -94,7 +102,6 @@ export class ProjectGenerator {
    */
   async generate(): Promise<GenerationResult> {
     const startTime = Date.now();
-    const filesCreated: string[] = [];
     
     try {
       // 确保输出目录存在
@@ -106,45 +113,45 @@ export class ProjectGenerator {
       
       // 生成基础项目结构
       const baseFiles = await this.generateBaseProject();
-      filesCreated.push(...baseFiles);
+      this.filesCreated.push(...baseFiles);
       
       // 生成配置文件
       const configFiles = await this.generateConfigFiles();
-      filesCreated.push(...configFiles);
+      this.filesCreated.push(...configFiles);
       
       // 生成数据库模式
       const dbFiles = await this.generateDatabaseSchema();
-      filesCreated.push(...dbFiles);
+      this.filesCreated.push(...dbFiles);
       
       // 生成功能模块
       const featureFiles = await this.generateFeatures();
-      filesCreated.push(...featureFiles);
+      this.filesCreated.push(...featureFiles);
       
       // 生成页面和组件
       const pageFiles = await this.generatePages();
-      filesCreated.push(...pageFiles);
+      this.filesCreated.push(...pageFiles);
       
       // 复制静态文件
       const staticFiles = await this.copyStaticFiles();
-      filesCreated.push(...staticFiles);
+      this.filesCreated.push(...staticFiles);
       
       // 生成环境配置
       const envFiles = await this.generateEnvironmentConfig();
-      filesCreated.push(...envFiles);
+      this.filesCreated.push(...envFiles);
       
       // === 写入原始 PRD 文件 ===
       const prdFileName = 'prd.json';
       await this.writeFile(prdFileName, JSON.stringify(this.prd, null, 2));
-      filesCreated.push(prdFileName);
+      this.filesCreated.push(prdFileName);
       
       const duration = Date.now() - startTime;
       console.log(`✅ 项目生成完成，耗时 ${duration}ms`);
-      console.log(`📦 创建了 ${filesCreated.length} 个文件`);
+      console.log(`📦 创建了 ${this.filesCreated.length} 个文件`);
       
       return {
         success: true,
         message: `项目 ${this.projectName} 成功生成`,
-        filesCreated,
+        filesCreated: this.filesCreated,
       };
       
     } catch (error) {
@@ -493,25 +500,34 @@ export class ProjectGenerator {
    * 根据页面定义生成页面文件
    */
   private async generatePageFromDefinition(page: PRDSchema['pages'][0]): Promise<string[]> {
-    const files: string[] = [];
     const templatePath = path.join(this.templatesPath, 'pages');
-    
-    // 确定页面路径
     const pagePath = this.getPagePath(page.route);
-    
-    // 生成页面文件
-    const pageTemplate = await this.readTemplate(templatePath, 'page.tsx.mustache');
-    const pageContent = mustache.render(pageTemplate, {
-      ...page,
-      components: page.components.join(', '),
-      hasAuth: page.auth || false,
-      layout: page.layout || 'DefaultLayout'
-    });
-    
+    let pageContent = '';
+
+    try {
+      const pageTemplate = await this.readTemplate(templatePath, 'page.tsx.mustache');
+      pageContent = mustache.render(pageTemplate, {
+        ...page,
+        components: page.components.join(', '),
+        hasAuth: page.auth || false,
+        layout: page.layout || 'DefaultLayout'
+      });
+      console.log(`✅ 使用模板生成页面: ${page.route}`);
+    } catch (err) {
+      if (err instanceof TemplateError) {
+        // 如果模板缺失，则降级为调用 LLM 动态生成
+        console.warn(`⚠️  页面模板缺失，降级为 LLM 动态生成: ${page.route}`);
+        pageContent = await this.llmClient.generatePage(page, this.prd.techStack);
+        console.log(`🧠 LLM 已生成页面: ${page.route}`);
+      } else {
+        // 其他错误则直接抛出
+        throw err;
+      }
+    }
+
     await this.writeFile(pagePath, pageContent);
-    files.push(pagePath);
-    
-    return files;
+    this.filesCreated.push(pagePath);
+    return [pagePath];
   }
   
   /**

@@ -3,6 +3,8 @@
  * 代码侠核心服务 - 清单驱动的确定性代码生成
  */
 
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { 
@@ -18,6 +20,7 @@ import {
 import { PRDValidator } from './prd-validator.js';
 import { ProjectGenerator } from './project-generator.js';
 import { SystemPromptLoader } from './system-prompt-loader.js';
+import { CodePaladinLLMClient } from './llm-client.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,8 +28,9 @@ const __dirname = path.dirname(__filename);
 export class CodePaladinService {
   private config: CodePaladinConfig;
   private systemPromptLoader: SystemPromptLoader;
+  private llmClient: CodePaladinLLMClient;
   
-  constructor(config?: Partial<CodePaladinConfig>) {
+  constructor(mcp: McpServer, config?: Partial<CodePaladinConfig>) {
     this.config = {
       templatesPath: path.resolve(__dirname, '../templates'),
       outputPath: process.cwd(),
@@ -37,7 +41,10 @@ export class CodePaladinService {
     };
     
     // 初始化系统提示词加载器
-    this.systemPromptLoader = new SystemPromptLoader();
+    this.systemPromptLoader = new SystemPromptLoader(
+      path.join(this.config.templatesPath, '..', 'prompts', 'system')
+    );
+    this.llmClient = new CodePaladinLLMClient(mcp);
   }
   
   /**
@@ -58,8 +65,10 @@ export class CodePaladinService {
    * 构建项目 - 核心方法
    */
   async buildProject(request: BuildProjectRequest): Promise<BuildProjectResponse> {
+    const { prd, outputPath: reqOutputPath, overwrite = false } = request;
+    const outputPath = reqOutputPath || this.config.outputPath;
     const startTime = Date.now();
-    
+
     try {
       console.log('🔧 CodePaladin 开始构建项目...');
       
@@ -79,25 +88,24 @@ export class CodePaladinService {
       
       if (this.config.validatePRD) {
         try {
-          validatedPRD = await PRDValidator.validatePRD(request.prd);
+          validatedPRD = await PRDValidator.validatePRD(prd);
           console.log('✅ PRD 校验通过');
         } catch (error) {
           console.log('❌ PRD 校验失败');
           throw error;
         }
       } else {
-        validatedPRD = request.prd;
+        validatedPRD = prd;
         console.log('⚠️  跳过 PRD 校验');
       }
       
       // 第二步：确定项目路径
       console.log('📁 第二步：确定项目路径...');
       const projectName = validatedPRD.project.name;
-      const projectPath = request.outputPath || path.join(this.config.outputPath, projectName);
+      const projectPath = path.join(outputPath, projectName);
       
       // 检查项目目录是否已存在
-      if (!this.config.allowOverwrite && !request.overwrite) {
-        const fs = await import('fs-extra');
+      if (!this.config.allowOverwrite && !overwrite) {
         if (await fs.pathExists(projectPath)) {
           throw new GenerationError(`项目目录已存在: ${projectPath}。使用 overwrite: true 来覆盖现有项目。`);
         }
@@ -107,7 +115,15 @@ export class CodePaladinService {
       
       // 第三步：创建项目生成器
       console.log('⚙️  第三步：初始化项目生成器...');
-      const generator = new ProjectGenerator(projectName, projectPath, validatedPRD);
+      const generator = new ProjectGenerator(
+        projectName,
+        projectPath,
+        validatedPRD,
+        this.llmClient,
+        {
+          templatesPath: this.config.templatesPath
+        }
+      );
       
       // 第四步：执行项目生成
       console.log('🔨 第四步：执行项目生成...');
@@ -118,8 +134,8 @@ export class CodePaladinService {
       }
       
       // 第五步：返回成功结果
-      const duration = Date.now() - startTime;
-      console.log(`🎉 项目生成完成！耗时 ${duration}ms`);
+      const duration = (Date.now() - startTime) / 1000;
+      console.log(`🎉 项目生成完成！耗时 ${duration}s`);
       
       return {
         success: true,
@@ -134,7 +150,7 @@ export class CodePaladinService {
     } catch (error) {
       console.error('💥 项目构建失败:', error);
       
-      const duration = Date.now() - startTime;
+      const duration = (Date.now() - startTime) / 1000;
       
       return {
         success: false,
@@ -302,7 +318,6 @@ export class CodePaladinService {
     
     // 检查模板目录
     try {
-      const fs = await import('fs-extra');
       const templatesExist = await fs.pathExists(this.config.templatesPath);
       checks.push({
         name: 'templates',
@@ -319,7 +334,6 @@ export class CodePaladinService {
     
     // 检查输出目录权限
     try {
-      const fs = await import('fs-extra');
       await fs.ensureDir(this.config.outputPath);
       checks.push({
         name: 'output_directory',

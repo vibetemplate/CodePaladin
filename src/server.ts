@@ -5,25 +5,26 @@
  * 代码侠 MCP 服务器 - 暴露代码生成能力
  */
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { createRequire } from 'module';
 import { CodePaladinService } from './core/codepaladin-service.js';
 import { 
   BuildProjectRequest, 
-  CodePaladinError 
+  CodePaladinError,
+  PRDSchema
 } from './core/types.js';
 
 const require = createRequire(import.meta.url);
-const servicePackageJson = require('../package.json');
+const pkg = require('../package.json');
 const mcpPackageJson = require('@modelcontextprotocol/sdk/package.json');
 
 // 服务器配置
 const SERVER_CONFIG = {
-  name: servicePackageJson.name,
-  version: servicePackageJson.version,
-  description: servicePackageJson.description,
+  name: pkg.name,
+  version: pkg.version,
+  description: pkg.description,
   mcpVersion: mcpPackageJson.version,
 };
 
@@ -34,11 +35,70 @@ const server = new McpServer({
 });
 
 // 初始化 CodePaladin 服务
-const codePaladinService = new CodePaladinService({
+const codePaladinService = new CodePaladinService(server, {
   verbose: true,
   validatePRD: true,
   allowOverwrite: true
 });
+
+// 注册一个用于动态生成页面的 Prompt
+server.registerPrompt(
+  'generate-page',
+  {
+    title: '动态页面生成器',
+    description: '根据页面定义和技术栈动态生成一个页面文件',
+    argsSchema: {
+      page: z.string(), 
+      techStack: z.string()
+    }
+  },
+  ({ page, techStack }) => {
+    if (!page || !techStack) {
+      throw new Error('generate-page prompt requires page and techStack arguments');
+    }
+    
+    const pageObj = JSON.parse(page) as PRDSchema['pages'][0];
+    const techStackObj = JSON.parse(techStack) as PRDSchema['techStack'];
+
+    return {
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `
+              你是一个专家级的 ${techStackObj.framework} 前端开发者。
+              你的任务是为一个新的 Web 应用生成一个页面组件。
+
+              # 技术栈
+              - 前端框架: ${techStackObj.framework}
+              - UI 框架: ${techStackObj.uiFramework}
+              - 数据库: ${techStackObj.database}
+              - 认证方案: ${techStackObj.auth}
+
+              # 页面需求
+              - 页面名称: ${pageObj.name}
+              - 页面标题: ${pageObj.title}
+              - 页面路由: ${pageObj.route}
+              - 页面描述: ${pageObj.description}
+              - 核心功能: 请实现以下组件 ${pageObj.components.join(', ')} 的基本功能。
+              - 是否需要认证: ${pageObj.auth ? '是' : '否'}
+
+              # 指示
+              - 生成一个完整的、可直接使用的 React/Next.js (TSX) 组件文件。
+              - 使用 UI 框架 (${techStackObj.uiFramework}) 的组件来实现界面。
+              - 如果需要认证，请添加一个检查用户登录状态的逻辑。
+              - 代码应该简洁、高质量，并包含适当的注释。
+              - 不要包含任何外围的解释或说明，只输出纯代码。
+              - 使用 style-in-js 或者 tailwind css 来进行样式定义。
+              - 必须返回一个 React 组件。
+            `
+          }
+        }
+      ]
+    };
+  }
+);
 
 // 预加载系统提示词
 let serviceInitialized = false;

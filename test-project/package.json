@@ -1,0 +1,15 @@
+{
+  "name": "test-project",
+  "version": "0.0.1",
+  "description": "A project to test dynamic page generation.",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
