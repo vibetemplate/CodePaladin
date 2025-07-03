@@ -82,31 +82,69 @@ npm start
 
 ## 在 Cursor 中配置
 
-要将 CodePaladin 集成到 Cursor IDE，请按以下步骤操作：
+以下示例展示了如何在 Cursor IDE 与 Claude Desktop 中接入 **CodePaladin** 的 MCP 服务。
 
-1.  **构建项目**:
-    确保已运行 `npm install` 和 `npm run build`。
+### 1. 配置 MCP 客户端
 
-2.  **获取项目绝对路径**:
-    在 CodePaladin 项目根目录运行 `pwd` 并复制路径，例如：
-    `/Users/yourname/dev/vibetemplate/CodePaladin`
+**CodePaladin** 以独立的 NPM 包 `codepaladin-mcp` 形式发布，启动时无需直接引用构建产物路径，只需通过 `npx` 拉起即可。
 
-3.  **修改 Cursor 设置**:
-    打开 Cursor 的 `~/.cursor/settings.json` 文件，添加以下配置。将路径替换为您的真实路径。
+#### Cursor 配置
 
-    ```json
-    {
-      "mcpServers": {
-        "codepaladin": {
-          "command": "node",
-          "args": ["/path/to/CodePaladin/dist/index.js"]
-        }
+在 `~/.cursor/settings.json` 中添加如下内容：
+
+```json
+{
+  "mcpServers": {
+    "codepaladin": {
+      "command": "npx",
+      "args": ["-y", "codepaladin-mcp@latest"],
+      "env": {
+        "CODEPALADIN_CONFIG_PATH": "~/.codepaladin/config.json"
       }
     }
-    ```
-    **注意**: `args` 必须是 `dist/index.js` 的**绝对路径**。
+  }
+}
+```
 
-配置后，即可在 Cursor 中通过 `@codepaladin` 调用其工具。
+> `-y` 参数用于在首次运行时自动确认 npx 下载提示，可按需移除。
+
+#### Claude Desktop 配置
+
+在 Claude Desktop 的配置文件中加入：
+
+```json
+{
+  "mcpServers": {
+    "codepaladin": {
+      "command": "npx",
+      "args": ["codepaladin-mcp@latest"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
+```
+
+保存后，即可在对应客户端通过 `@codepaladin` 前缀调用 CodePaladin 提供的所有 MCP 工具。
+
+#### Claude Code (CLI) 配置
+
+使用 Claude Code 时，可通过以下命令添加 **CodePaladin** MCP 服务器（以 *user* 作用域为例，可按需改为 *project* 或 *local*）：
+
+```bash
+claude mcp add codepaladin -s user -- npx -y codepaladin-mcp@latest
+```
+
+如果需要自定义环境变量或配置路径，可以使用 `-e` 选项，例如：
+
+```bash
+claude mcp add codepaladin -s user -e CODEPALADIN_CONFIG_PATH=~/.codepaladin/config.json -- npx -y codepaladin-mcp@latest
+```
+
+> 详细的 MCP 配置方法请参考官方文档 <https://docs.anthropic.com/en/docs/claude-code/mcp>。
+
+保存后，即可在对应客户端通过 `@codepaladin` 前缀调用 CodePaladin 提供的所有 MCP 工具。
 
 ## MCP 工具列表
 
