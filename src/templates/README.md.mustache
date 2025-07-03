@@ -1,0 +1,127 @@
+# {{displayName}}
+
+{{description}}
+
+## 技术栈
+
+- **前端框架**: {{framework}}
+- **UI 框架**: {{uiFramework}}
+- **数据库**: {{database}}
+- **认证**: {{auth}}
+- **部署**: {{deployment}}
+
+## 功能特性
+
+{{#features}}
+- {{.}}
+{{/features}}
+
+## 项目结构
+
+```
+{{projectName}}/
+├── pages/              # 页面文件
+├── components/         # 组件库
+├── lib/               # 工具函数和服务
+├── styles/            # 样式文件
+├── public/            # 静态资源
+{{#hasAuth}}
+├── middleware.ts      # 认证中间件
+{{/hasAuth}}
+{{#database}}
+├── prisma/            # 数据库模式
+{{/database}}
+└── package.json       # 项目配置
+```
+
+## 开发指南
+
+### 环境设置
+
+1. 安装依赖：
+```bash
+npm install
+```
+
+2. 配置环境变量：
+```bash
+cp .env.example .env.local
+```
+
+然后编辑 `.env.local` 文件，填入所需的环境变量。
+
+{{#database}}
+3. 初始化数据库：
+```bash
+npx prisma generate
+npx prisma db push
+{{#hasAuth}}
+npx prisma db seed
+{{/hasAuth}}
+```
+{{/database}}
+
+### 启动开发
+
+```bash
+npm run dev
+```
+
+在浏览器中打开 [http://localhost:3000](http://localhost:3000) 查看应用。
+
+### 构建部署
+
+```bash
+npm run build
+npm run start
+```
+
+## 环境变量
+
+在 `.env.local` 文件中配置以下环境变量：
+
+{{#environment.variables}}
+- `{{@key}}`: {{.}}
+{{/environment.variables}}
+
+{{#environment.secrets}}
+### 需要配置的密钥：
+{{#.}}
+- `{{.}}`
+{{/.}}
+{{/environment.secrets}}
+
+## 页面结构
+
+{{#pages}}
+### {{title}} (`{{route}}`)
+{{description}}
+
+**组件**: {{components}}
+{{#auth}}**需要认证**: 是{{/auth}}
+{{#public}}**公开访问**: 是{{/public}}
+
+{{/pages}}
+
+## 开发注意事项
+
+{{#hasAuth}}
+- 认证功能已集成，请参考 `lib/auth/` 目录下的文件
+{{/hasAuth}}
+{{#hasUpload}}
+- 文件上传功能已配置，支持图片和文档上传
+{{/hasUpload}}
+{{#hasEmail}}
+- 邮件服务已集成，请配置相关环境变量
+{{/hasEmail}}
+{{#hasPayment}}
+- 支付功能已集成，请配置 Stripe 相关密钥
+{{/hasPayment}}
+
+## 许可证
+
+MIT License
+
+---
+
+此项目由 VibeGen CodePaladin 自动生成 🤖

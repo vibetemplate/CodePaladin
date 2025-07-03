@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "VibeGen PRD Schema",
+  "description": "CodePaladin PRD 输入验证 Schema",
+  "required": ["project", "techStack", "features", "pages", "environment", "createdAt", "version"],
+  "properties": {
+    "project": {
+      "type": "object",
+      "required": ["name", "displayName", "description", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "minLength": 1,
+          "maxLength": 50,
+          "description": "项目名称（小写，连字符分隔）"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "项目显示名称"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "项目描述"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "项目版本号"
+        },
+        "author": {
+          "type": "string",
+          "description": "项目作者"
+        }
+      }
+    },
+    "techStack": {
+      "type": "object",
+      "required": ["framework", "uiFramework", "database", "auth", "deployment"],
+      "properties": {
+        "framework": {
+          "type": "string",
+          "enum": ["next.js", "astro", "vue", "react", "svelte"],
+          "description": "前端框架"
+        },
+        "uiFramework": {
+          "type": "string",
+          "enum": ["tailwind-radix", "tailwind-shadcn", "chakra-ui", "mui", "antd"],
+          "description": "UI 框架"
+        },
+        "database": {
+          "type": "string",
+          "enum": ["postgresql", "mysql", "sqlite", "supabase", "mongodb"],
+          "description": "数据库类型"
+        },
+        "auth": {
+          "type": "string",
+          "enum": ["supabase", "nextauth", "firebase", "clerk", "auth0", "none"],
+          "description": "认证方案"
+        },
+        "deployment": {
+          "type": "string",
+          "enum": ["vercel", "netlify", "aws", "railway", "docker", "static"],
+          "description": "部署方案"
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "required": ["auth", "admin", "upload", "email", "payment", "realtime", "analytics", "i18n", "pwa", "seo"],
+      "properties": {
+        "auth": {
+          "type": "boolean",
+          "description": "用户认证功能"
+        },
+        "admin": {
+          "type": "boolean",
+          "description": "管理后台功能"
+        },
+        "upload": {
+          "type": "boolean",
+          "description": "文件上传功能"
+        },
+        "email": {
+          "type": "boolean",
+          "description": "邮件功能"
+        },
+        "payment": {
+          "type": "boolean",
+          "description": "支付功能"
+        },
+        "realtime": {
+          "type": "boolean",
+          "description": "实时功能"
+        },
+        "analytics": {
+          "type": "boolean",
+          "description": "分析功能"
+        },
+        "i18n": {
+          "type": "boolean",
+          "description": "国际化功能"
+        },
+        "pwa": {
+          "type": "boolean",
+          "description": "PWA 功能"
+        },
+        "seo": {
+          "type": "boolean",
+          "description": "SEO 优化"
+        }
+      }
+    },
+    "pages": {
+      "type": "array",
+      "description": "页面定义列表",
+      "items": {
+        "type": "object",
+        "required": ["route", "name", "title", "components"],
+        "properties": {
+          "route": {
+            "type": "string",
+            "pattern": "^/.*$",
+            "description": "页面路由"
+          },
+          "name": {
+            "type": "string",
+            "description": "页面名称"
+          },
+          "title": {
+            "type": "string",
+            "description": "页面标题"
+          },
+          "description": {
+            "type": "string",
+            "description": "页面描述"
+          },
+          "layout": {
+            "type": "string",
+            "description": "布局模板"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "页面组件列表"
+          },
+          "auth": {
+            "type": "boolean",
+            "description": "是否需要认证"
+          },
+          "public": {
+            "type": "boolean",
+            "description": "是否为公开页面"
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["variables", "secrets"],
+      "properties": {
+        "variables": {
+          "type": "object",
+          "description": "环境变量",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "需要用户配置的密钥列表"
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "创建时间"
+    },
+    "version": {
+      "type": "string",
+      "description": "PRD Schema 版本"
+    }
+  }
+}

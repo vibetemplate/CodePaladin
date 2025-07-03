@@ -1,0 +1,113 @@
+{
+  "name": "{{projectName}}",
+  "version": "{{version}}",
+  "description": "{{description}}",
+  {{#author}}
+  "author": "{{author}}",
+  {{/author}}
+  "private": true,
+  "scripts": {
+    {{#framework}}
+    {{#isNextJS}}
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    {{/isNextJS}}
+    {{#isAstro}}
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    {{/isAstro}}
+    {{#isVue}}
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    {{/isVue}}
+    {{/framework}}
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    {{#framework}}
+    {{#isNextJS}}
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    {{/isNextJS}}
+    {{#isAstro}}
+    "astro": "^4.0.0",
+    {{/isAstro}}
+    {{#isVue}}
+    "vue": "^3.0.0",
+    "vue-router": "^4.0.0",
+    {{/isVue}}
+    {{/framework}}
+    {{#uiFramework}}
+    {{#isTailwind}}
+    "tailwindcss": "^3.0.0",
+    "autoprefixer": "^10.0.0",
+    "postcss": "^8.0.0",
+    {{/isTailwind}}
+    {{#isRadix}}
+    "@radix-ui/react-dialog": "^1.0.0",
+    "@radix-ui/react-dropdown-menu": "^2.0.0",
+    {{/isRadix}}
+    {{#isShadcn}}
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0",
+    {{/isShadcn}}
+    {{/uiFramework}}
+    {{#database}}
+    {{#isPrisma}}
+    "@prisma/client": "^5.0.0",
+    {{/isPrisma}}
+    {{#isSupabase}}
+    "@supabase/supabase-js": "^2.0.0",
+    {{/isSupabase}}
+    {{/database}}
+    {{#hasAuth}}
+    {{#isNextAuth}}
+    "next-auth": "^4.0.0",
+    {{/isNextAuth}}
+    {{#isSupabaseAuth}}
+    "@supabase/auth-helpers-nextjs": "^0.8.0",
+    {{/isSupabaseAuth}}
+    {{/hasAuth}}
+    {{#hasEmail}}
+    "nodemailer": "^6.0.0",
+    "resend": "^2.0.0",
+    {{/hasEmail}}
+    {{#hasPayment}}
+    "stripe": "^14.0.0",
+    {{/hasPayment}}
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    {{#framework}}
+    {{#isNextJS}}
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    {{/isNextJS}}
+    {{#isVue}}
+    "@vitejs/plugin-vue": "^4.0.0",
+    "vite": "^5.0.0",
+    "@vue/tsconfig": "^0.4.0",
+    {{/isVue}}
+    {{/framework}}
+    {{#database}}
+    {{#isPrisma}}
+    "prisma": "^5.0.0",
+    {{/isPrisma}}
+    {{/database}}
+    {{#hasEmail}}
+    "@types/nodemailer": "^6.0.0",
+    {{/hasEmail}}
+    "typescript": "^5.0.0"
+  }
+}
