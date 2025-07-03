@@ -1,6 +1,6 @@
 {
   "name": "vibe-codepaladin",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "VibeGen 代码侠 (CodePaladin) - Vibe 确定性代码生成服务",
   "main": "dist/index.js",
   "type": "module",

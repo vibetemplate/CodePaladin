@@ -1,0 +1,35 @@
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
+async function main() {
+  // TODO: 添加初始数据
+  console.log('🌱 Seeding database...');
+
+  {{#hasAuth}}
+  // 创建示例用户（仅当启用认证时）
+  await prisma.user.create({
+    data: {
+      email: 'admin@example.com',
+      password: 'securepassword',
+    },
+  });
+  {{/hasAuth}}
+
+  // 创建示例记录
+  await prisma.example.create({
+    data: {
+      name: 'Hello World',
+    },
+  });
+
+  console.log('✅ Database seeded');
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  }); 

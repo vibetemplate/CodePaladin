@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "{{database}}"
+  url      = env("DATABASE_URL")
+}
+
+{{#hasAuth}}
+/// -------------------------------
+/// 用户模型 (启用了认证功能时生成)
+/// -------------------------------
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+{{/hasAuth}}
+
+/// -------------------------------
+/// 示例模型
+/// -------------------------------
+model Example {
+  id        String   @id @default(cuid())
+  name      String?
+  createdAt DateTime @default(now())
+} 
